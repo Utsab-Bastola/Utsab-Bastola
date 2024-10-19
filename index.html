@@ -1,0 +1,167 @@
+<html>
+<head>
+<base href="/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WordWise Dictionary</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f7fafc;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #e2e8f0 0%, #f0f5f9 100%);
+    }
+    .container {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        padding: 2.5rem;
+        width: 90%;
+        max-width: 600px;
+        transition: transform 0.3s ease;
+    }
+    .container:hover {
+        transform: translateY(-5px);
+    }
+    h1 {
+        color: #2b6cb0;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 2rem;
+    }
+    .search-container {
+        display: flex;
+        margin-bottom: 1.5rem;
+    }
+    #word-input {
+        flex-grow: 1;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border: 2px solid #2b6cb0;
+        border-radius: 8px 0 0 8px;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+    #word-input:focus {
+        border-color: #3182ce;
+    }
+    #search-btn {
+        background-color: #2b6cb0;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+        border-radius: 0 8px 8px 0;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    #search-btn:hover {
+        background-color: #3182ce;
+        transform: scale(1.05);
+    }
+    #result {
+        background-color: #edf2f7;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .word {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #2b6cb0;
+        margin-bottom: 0.5rem;
+    }
+    .definition {
+        margin-bottom: 0.75rem;
+    }
+    .part-of-speech {
+        font-style: italic;
+        color: #4a5568;
+        font-weight: 500;
+    }
+    .example {
+        color: #718096;
+        margin-top: 0.25rem;
+        font-style: italic;
+    }
+    .loading {
+        text-align: center;
+        color: #4a5568;
+        font-size: 1.1rem;
+    }
+    .error {
+        color: #e53e3e;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>WordWise Dictionary</h1>
+        <div class="search-container">
+            <input type="text" id="word-input" placeholder="Enter a word...">
+            <button id="search-btn">Search</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const wordInput = document.getElementById('word-input');
+        const searchBtn = document.getElementById('search-btn');
+        const result = document.getElementById('result');
+
+        searchBtn.addEventListener('click', searchWord);
+        wordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchWord();
+            }
+        });
+
+        function searchWord() {
+            const word = wordInput.value.trim();
+            if (word === '') return;
+
+            result.innerHTML = '<p class="loading">Searching for the word...</p>';
+
+            fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        displayDefinitions(data[0]);
+                    } else {
+                        result.innerHTML = '<p class="error">No definitions found for this word.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    result.innerHTML = '<p class="error">An error occurred while fetching the definition. Please try again.</p>';
+                });
+        }
+
+        function displayDefinitions(data) {
+            let html = `<div class="word">${data.word}</div>`;
+
+            data.meanings.forEach(meaning => {
+                html += `<div class="part-of-speech">${meaning.partOfSpeech}</div>`;
+                meaning.definitions.forEach((def, index) => {
+                    html += `
+                        <div class="definition">
+                            ${index + 1}. ${def.definition}
+                            ${def.example ? `<div class="example">Example: "${def.example}"</div>` : ''}
+                        </div>
+                    `;
+                });
+            });
+
+            result.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
